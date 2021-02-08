@@ -1,3 +1,43 @@
+/*:ja
+ * @target MZ
+ * @plugindesc HUD Maker Ultraに必要なコードが含まれています。
+ * RPGツクールのコードベースには影響しません。
+ * @author SRDude
+ * @url http://sumrndm.site
+ * @orderBefore SRD_HUDMakerUltra
+ * 
+ * @help
+ * 翻訳:ムノクラ
+ * https://fungamemake.com/
+ * https://twitter.com/munokura/
+ * 
+ * 元プラグイン:
+ * http://sumrndm.site/hud-maker-ultra/
+ * 
+ * ============================================================================
+ *                                  Ultra Base
+ *                                 Version 1.0.4
+ *                                    SRDude
+ * ============================================================================
+ * 
+ * HUD Maker Ultraに必要な基本プラグイン。
+ * 
+ * それ以上の機能は提供していません。
+ * 
+ * ==========================================================================
+ *  ヘルプファイルの終わり
+ * ==========================================================================
+ * 
+ * ヘルプファイルの終わりへようこそ。
+ * 読んでくれてありがとう!
+ * 
+ * https://www.youtube.com/SumRndmDde
+ * https://www.twitter.com/SumRndmDde
+ * http://sumrndm.site
+ * 
+ * 次の機会まで
+ *   ~ SRDude
+ */
 /*:
  * @target MZ
  * @plugindesc Contains code required for HUD Maker Ultra. Does not affect the RPG Maker codebase.
@@ -8,7 +48,7 @@
  * @help
  * ============================================================================
  *                                  Ultra Base
- *                                 Version 1.0.7
+ *                                 Version 1.0.4
  *                                    SRDude
  * ============================================================================
  *
@@ -34,7 +74,7 @@ var SRD = SRD || {};
 SRD.UltraBase = SRD.UltraBase || {};
 
 var Imported = Imported || {};
-Imported.SRD_UltraBase = 0x010007; // 1.0.7
+Imported.SRD_UltraBase = 0x010004; // 1.0.4
 
 (function($) {
 
@@ -486,18 +526,18 @@ class UltraEasingCurve {
 	}
 
 	static elasticEaseIn(v) {
-		return Math.sin(13 * this.M_PI_2 * v) * Math.pow(2, 10 * (v - 1));
+		return Math.sin(13 * M_PI_2 * v) * Math.pow(2, 10 * (v - 1));
 	}
 
 	static elasticEaseOut(v) {
-		return Math.sin(-13 * this.M_PI_2 * (v + 1)) * Math.pow(2, -10 * v) + 1;
+		return Math.sin(-13 * M_PI_2 * (v + 1)) * Math.pow(2, -10 * v) + 1;
 	}
 
 	static elasticEaseInOut(v) {
 		if(v < 0.5) {
-			return 0.5 * Math.sin(13 * this.M_PI_2 * (2 * v)) * Math.pow(2, 10 * ((2 * v) - 1));
+			return 0.5 * Math.sin(13 * M_PI_2 * (2 * v)) * Math.pow(2, 10 * ((2 * v) - 1));
 		} else {
-			return 0.5 * (Math.sin(-13 * this.M_PI_2 * ((2 * v - 1) + 1)) * Math.pow(2, -10 * (2 * v - 1)) + 2);
+			return 0.5 * (Math.sin(-13 * M_PI_2 * ((2 * v - 1) + 1)) * Math.pow(2, -10 * (2 * v - 1)) + 2);
 		}
 	}
 
@@ -1886,7 +1926,7 @@ class UltraDynamicValue_ActorComponent extends UltraDynamicValue_BaseComponent {
 				case 12: { this._resultNumber = actor.def; break }
 				case 13: { this._resultNumber = actor.mat; break }
 				case 14: { this._resultNumber = actor.mdf; break }
-				case 15: { this._resultNumber = actor.agi; break }
+				case 15: { this._resultNumber = actor.spd; break }
 				case 16: { this._resultNumber = actor.luk; break }
 			}
 		}
@@ -1969,7 +2009,7 @@ class UltraDynamicValue_EnemyComponent extends UltraDynamicValue_BaseComponent {
 				case 10: { this._resultNumber = actor.def; break }
 				case 11: { this._resultNumber = actor.mat; break }
 				case 12: { this._resultNumber = actor.mdf; break }
-				case 13: { this._resultNumber = actor.agi; break }
+				case 13: { this._resultNumber = actor.spd; break }
 				case 14: { this._resultNumber = actor.luk; break }
 			}
 		}
@@ -2383,23 +2423,6 @@ $.Game_System_onBeforeSave = Game_System.prototype.onBeforeSave;
 Game_System.prototype.onBeforeSave = function() {
 	$.Game_System_onBeforeSave.apply(this, arguments);
 	this.onSystemStatsChanged.trigger();
-};
-
-//=============================================================================
-// * Game_Actor
-// *
-// * Added an `UltraSignal` that triggers whenever actor face image is changed.
-//=============================================================================
-$.Game_Actor_initialize = Game_Actor.prototype.initialize;
-Game_Actor.prototype.initialize = function() {
-	$.Game_Actor_initialize.apply(this, arguments);
-	this.onFaceImageChanged = new UltraSignal();
-};
-
-$.Game_Actor_setFaceImage = Game_Actor.prototype.setFaceImage;
-Game_Actor.prototype.setFaceImage = function(faceName, faceIndex) {
-	$.Game_Actor_setFaceImage.apply(this, arguments);
-	this.onFaceImageChanged.trigger();
 };
 
 //=============================================================================
