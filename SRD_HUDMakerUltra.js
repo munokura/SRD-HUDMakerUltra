@@ -1,3 +1,126 @@
+/*:ja
+ * @target MZ
+ * @plugindesc マップやバトル用のHUDを作成して使用することができます。
+ * HUD Maker Ultraエディタが必要です。
+ * @author SRDude
+ * @url http://sumrndm.site/hud-maker-ultra
+ * @base SRD_UltraBase
+ * @orderAfter SRD_UltraBase
+ * @orderBefore SRD_HUDMakerUltraPro
+ * 
+ * @help
+ * 翻訳:ムノクラ
+ * https://fungamemake.com/
+ * https://twitter.com/munokura/
+ * 
+ * 元プラグイン:
+ * http://sumrndm.site/hud-maker-ultra/
+ * 
+ * ============================================================================
+ *                                HUD Maker Ultra
+ *                                 Version 1.0.13
+ *                                    SRDude
+ * ============================================================================
+ * 
+ * このプラグインを使用すると、
+ * ゲーム制作者が独自のマップHUDやバトルHUDを作成することができます。
+ * 
+ * このプラグインには、HUD Maker Ultraソフトウェアが必要です。
+ * ここから無料でダウンロードできます。
+ * http://sumrndm.site/hud-maker-ultra
+ * 
+ * ==========================================================================
+ *  ヘルプファイルの終わり
+ * ==========================================================================
+ * 
+ * ヘルプファイルの終わりへようこそ。
+ * 読んでくれてありがとう!
+ * 
+ * https://www.youtube.com/SumRndmDde
+ * https://www.twitter.com/SumRndmDde
+ * http://sumrndm.site
+ * 
+ * 次の機会まで
+ *   ~ SRDude
+ *
+ *
+ * @param Auto-Reload HUD Data
+ * @text HUDデータ自動リロード
+ * @desc ONにすると、ゲームウィンドウがフォーカスされる度にエディタのデータがリロードされます。プレイテスト時のみ機能します。
+ * @type boolean
+ * @default false
+ * 
+ * @param Enable Screenshots
+ * @text スクリーンショット有効化
+ * @desc ONの場合、"CTRL + S"を押すと、HUDを表示しない状態でスクリーンショットを撮ることができます。
+ * @type boolean
+ * @default false
+ * 
+ * @param Hide Battle Status Window
+ * @text バトルステータスウィンドウ非表示
+ * @desc ONの場合、パーティの戦闘ステータスウィンドウが非表示になります。
+ * @type boolean
+ * @on 非表示
+ * @off 表示
+ * @default false
+ * 
+ * @param Fade During Events
+ * @text イベント時フェードアウト
+ * @desc ONの場合、イベント中にHUDがフェードアウトします。
+ * @type boolean
+ * @default true
+ * 
+ * @param Event Fade Opacity
+ * @text イベントフェード不透明度
+ * @desc イベント処理中のHUDの不透明度。
+ * 0～255の間の数値を選択します。
+ * @type number
+ * @default 125
+ * 
+ * @param Fade Duration
+ * @text フェード時間
+ * @desc モード切替フェード完了までの時間
+ * @type number
+ * @default 10
+ * 
+ * @param Map Visibility Code
+ * @text マップ表示コード
+ * @desc マップHUDの表示を指定するコードです。
+ * HUDに影響を与えない場合「return true;」のままにします。
+ * @type multiline_string
+ * @default return true;
+ * 
+ * @param Battle Visibility Code
+ * @text バトル表示コード
+ * @desc バトルHUDの表示を指定するコードです。
+ * HUDに影響を与えない場合「return true;」のままにします。
+ * @type multiline_string
+ * @default return true;
+ * 
+ * @command Set HUD Visibility
+ * @text HUD表示を指定
+ * @desc HUDを表示/非表示に設定します。
+ * 
+ * @arg Visible?
+ * @text HUD表示？
+ * @desc HUDを表示/非表示に設定します。
+ * @type boolean
+ * @on 表示
+ * @off 非表示
+ * @default true
+ * 
+ * @command Set HUD Activity
+ * @text HUD有効化の切替
+ * @desc HUDを有効化/無効化に設定します。
+ * 
+ * @arg Active?
+ * @text HUD有効化？
+ * @desc HUDを有効化/無効化に設定します。
+ * @type boolean
+ * @on 有効化
+ * @off 無効化
+ * @default true
+ */
 /*:
  * @target MZ
  * @plugindesc Allows you to create and use HUDs for the map and battles.
