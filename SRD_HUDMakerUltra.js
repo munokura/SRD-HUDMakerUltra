@@ -18,7 +18,7 @@
  * 
  * ============================================================================
  *                                HUD Maker Ultra
- *                                 Version 1.0.13
+ *                                 Version 1.1.5
  *                                    SRDude
  * ============================================================================
  * 
@@ -59,6 +59,14 @@
  * @param Hide Battle Status Window
  * @text バトルステータスウィンドウ非表示
  * @desc ONの場合、パーティの戦闘ステータスウィンドウが非表示になります。
+ * @type boolean
+ * @on 非表示
+ * @off 表示
+ * @default false
+ *
+ * @param Hide Battle Selection Window
+ * @text バトル選択ウィンドウを非表示
+ * @desc ONにすると、敵/パーティ選択画面が非表示になります。
  * @type boolean
  * @on 非表示
  * @off 表示
@@ -148,6 +156,13 @@
  * @off Show
  * @default false
  *
+ * @param Hide Battle Selection Window
+ * @desc If ON, the enemy/party selection window will be made invisible.
+ * @type boolean
+ * @on Hide
+ * @off Show
+ * @default false
+ *
  * @param Fade During Events
  * @desc If ON, the HUD will fade out during events.
  * @type boolean
@@ -201,7 +216,7 @@
  * @help
  * ============================================================================
  *                                HUD Maker Ultra
- *                                 Version 1.0.13
+ *                                 Version 1.1.5
  *                                    SRDude
  * ============================================================================
  *
@@ -229,7 +244,7 @@ var SRD = SRD || {};
 SRD.HUDMakerUltra = SRD.HUDMakerUltra || {};
 
 var Imported = Imported || {};
-Imported.SRD_HUDMakerUltra = 0x01000d; // 1.0.13
+Imported.SRD_HUDMakerUltra = 0x010105; // 1.1.5
 
 var $dataUltraHUD = null;
 var $gameUltraHUD = null;
@@ -251,6 +266,20 @@ $.hudDataPath = "data/plugin/UltraHUD.json";
 function CheckDependencies() {
 	if(typeof Imported.SRD_UltraBase !== "number") {
 		console.warn("SRD_HUDMakerUltra.js requires SRD_UltraBase.js to be installed!");
+		return false;
+	}
+
+	if(Imported.SRD_UltraBase < 0x010100) {
+		const msg = "SRD_UltraBase.js requies an update! Please update to the latest version.";
+		console.warn(msg);
+		if(confirm(msg + "\nWould you like to open the download page (right-click -> save)?")) {
+			const url = "https://raw.githubusercontent.com/SumRndmDde/HUDMakerUltra/main/SRD_UltraBase.js";
+			if(Utils.isNwjs()) {
+				require('nw.gui').Shell.openExternal(url);
+			} else if(window && window.open) {
+				window.open(url);
+			}
+		}
 		return false;
 	}
 
@@ -276,6 +305,7 @@ const params = PluginManager.parameters("SRD_HUDMakerUltra");
 $.autoReload = String(params["Auto-Reload HUD Data"]).trim().toLowerCase() === "true";
 $.screenshots = String(params["Enable Screenshots"]).trim().toLowerCase() === "true";
 $.hideStatusWindow = String(params["Hide Battle Status Window"]).trim().toLowerCase() === "true";
+$.hideSelectionWindow = String(params["Hide Battle Selection Window"]).trim().toLowerCase() === "true";
 $.hideDuringEvents = String(params["Fade During Events"]).trim().toLowerCase() === "true";
 $.fadeOpacity = parseInt(params["Event Fade Opacity"] || "125") / 255;
 $.fadeDuration = parseInt(params["Fade Duration"] || "10");
@@ -782,7 +812,7 @@ class Sprite_UltraHUDComponent extends Sprite {
 
 	updateMultiCondition() {
 		if(this._multiCondition !== null) {
-			this._multiCondition.update();
+			this._multiCondition.update(this);
 		}
 	}
 
@@ -806,8 +836,16 @@ class Sprite_UltraHUDComponent extends Sprite {
 		return new Rectangle(-this.anchor.x * this.width, -this.anchor.y * this.height, this.width, this.height);
 	}
 
+	isOverlayCoordinates(x, y, yOffset = 0) {
+		if(!this.isEnabled()) this.updateTransform();
+		const touchPos = new Point(x, y);
+		const localPos = this.worldTransform.applyInverse(touchPos);
+		return this.boundingRect().contains(localPos.x, localPos.y) || 
+			(yOffset != 0 ? this.boundingRect().contains(localPos.x, localPos.y + yOffset) : false);
+	}
+
 	isEnabled() {
-		return this.visible;
+		return this.worldVisible;
 	}
 
 	onChildAdded(child) {
@@ -1420,6 +1458,10 @@ class Sprite_UltraHUDComponent_Gauge extends Sprite_UltraHUDComponent {
 		return this._smoothness;
 	}
 
+	isSmooth() {
+		return this._smoothness > 0;
+	}
+
 	setGaugeValue(value) {
 		if(this._value === null) {
 			this._value = value;
@@ -1428,6 +1470,10 @@ class Sprite_UltraHUDComponent_Gauge extends Sprite_UltraHUDComponent {
 		} else if(this._value !== value) {
 			this._targetValue = value;
 			this._duration = this.smoothness();
+			if(!this.isSmooth()) {
+				this._value = value;
+				this.prepareToRender();
+			}
 		}
 	}
 
@@ -1439,18 +1485,22 @@ class Sprite_UltraHUDComponent_Gauge extends Sprite_UltraHUDComponent {
 		} else if(this._maximum !== value) {
 			this._targetMaximum = value;
 			this._duration = this.smoothness();
+			if(!this.isSmooth()) {
+				this._maximum = value;
+				this.prepareToRender();
+			}
 		}
 	}
 
 	update() {
 		super.update();
-		this.updateGaugeAnimation();
 		if(this._dynamicValue !== null) {
 			this._dynamicValue.update();
 		}
 		if(this._dynamicMax !== null) {
 			this._dynamicMax.update();
 		}
+		this.updateGaugeAnimation();
 		if(this._needRedraw) {
 			this.renderBitmap();
 			this._needRedraw = false;
@@ -1464,6 +1514,9 @@ class Sprite_UltraHUDComponent_Gauge extends Sprite_UltraHUDComponent {
 			this._maximum = (this._maximum * (d - 1) + this._targetMaximum) / d;
 			this._duration--;
 			this.prepareToRender();
+		} else if(!this.isSmooth()) {
+			this.setGaugeValue(this._targetValue);
+			this.setGaugeMaximum(this._targetMaximum);
 		}
 	}
 
@@ -1662,13 +1715,13 @@ class Sprite_UltraHUDComponent_PictureGauge extends Sprite_UltraHUDComponent {
 
 	update() {
 		super.update();
-		this.updateGaugeAnimation();
 		if(this._dynamicValue !== null) {
 			this._dynamicValue.update();
 		}
 		if(this._dynamicMax !== null) {
 			this._dynamicMax.update();
 		}
+		this.updateGaugeAnimation();
 		if(this._needRedraw) {
 			this.renderBitmap();
 			this._needRedraw = false;
@@ -1681,6 +1734,10 @@ class Sprite_UltraHUDComponent_PictureGauge extends Sprite_UltraHUDComponent {
 			this._value = (this._value * (d - 1) + this._targetValue) / d;
 			this._maximum = (this._maximum * (d - 1) + this._targetMaximum) / d;
 			this._duration--;
+			this.resizeGauge();
+		} else if(this._value !== this._targetValue || this._maximum !== this._targetMaximum) {
+			this._value = this._targetValue;
+			this._maximum = this._targetMaximum;
 			this.resizeGauge();
 		}
 	}
@@ -1804,15 +1861,15 @@ class Sprite_UltraHUDComponent_ActorFace extends Sprite_UltraHUDComponent {
 	renderBitmap(actorId) {
 		const actor = $gameActors.actor(actorId);
 		if(actor) {
-			if(this._oldActor !== null && this._oldActorSignalId !== null && this._oldActor.onFaceImageChanged) {
-				this._oldActor.onFaceImageChanged.remove(this._oldActorSignalId);
+			if(this._oldActor !== null && this._oldActorSignalId !== null && this._oldActor.getOnFaceChangeSignal()) {
+				this._oldActor.getOnFaceChangeSignal().remove(this._oldActorSignalId);
 				this._oldActor = null;
 				this._oldActorSignalId = null;
 			}
 			this.renderBitmapInternal(actor);
-			if(actor && actor.onFaceImageChanged) {
+			if(actor && actor.getOnFaceChangeSignal()) {
 				this._oldActor = actor;
-				this._oldActorSignalId = actor.onFaceImageChanged.run(this.renderBitmapInternal.bind(this, actor));
+				this._oldActorSignalId = actor.getOnFaceChangeSignal().run(this.renderBitmapInternal.bind(this, actor));
 			} else {
 				this._oldActor = null;
 				this._oldActorSignalId = null;
@@ -2135,28 +2192,46 @@ class Scene_Battle {
 	}
 }
 
-if($.hideStatusWindow) {
+if($.hideStatusWindow || $.hideSelectionWindow) {
 
 $.Scene_Battle = $.Scene_Battle || {};
 
-$.Scene_Battle.updateStatusWindowVisibility = Scene_Battle.prototype.updateStatusWindowVisibility;
-Scene_Battle.prototype.updateStatusWindowVisibility = function() {
-	$.Scene_Battle.updateStatusWindowVisibility.apply(this, arguments);
-	this._statusWindow.visible = false;
-};
+if($.hideStatusWindow) {
 
-$.Scene_Battle.createStatusWindow = Scene_Battle.prototype.createStatusWindow;
-Scene_Battle.prototype.createStatusWindow = function() {
-	$.Scene_Battle.createStatusWindow.apply(this, arguments);
-
-	// Maybe a bit of a weird way to handle this?
-	// But most compatible and consistent way to achieve the desired behavior(?)
-	this._statusWindow.__srd_hudmakeultra_show = this._statusWindow.show;
-	this._statusWindow.show = function() {
-		this.__srd_hudmakeultra_show.apply(this, arguments);
-		this.visible = false;
+	$.Scene_Battle.updateStatusWindowVisibility = Scene_Battle.prototype.updateStatusWindowVisibility;
+	Scene_Battle.prototype.updateStatusWindowVisibility = function() {
+		$.Scene_Battle.updateStatusWindowVisibility.apply(this, arguments);
+		this._statusWindow.visible = false;
 	};
-};
+
+	$.Scene_Battle.createStatusWindow = Scene_Battle.prototype.createStatusWindow;
+	Scene_Battle.prototype.createStatusWindow = function() {
+		$.Scene_Battle.createStatusWindow.apply(this, arguments);
+
+		// Maybe a bit of a weird way to handle this?
+		// But most compatible and consistent way to achieve the desired behavior(?)
+		this._statusWindow.__srd_hudmakeultra_show = this._statusWindow.show;
+		this._statusWindow.show = function() {
+			this.__srd_hudmakeultra_show.apply(this, arguments);
+			this.visible = false;
+		};
+	};
+
+}
+
+if($.hideSelectionWindow) {
+
+	$.Scene_Battle.update = Scene_Battle.prototype.update;
+	Scene_Battle.prototype.update = function() {
+		$.Scene_Battle.update.apply(this, arguments);
+
+		// Same thing as the status window. This may be a bit scuffed, 
+		// but is probably best since making these windows invisible disables their functionality.
+		this._actorWindow.x = 999999;
+		this._enemyWindow.x = 999999;
+	};
+
+}
 
 }
 
